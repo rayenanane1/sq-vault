@@ -1,0 +1,20 @@
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+libs = ["lib"]
+allow_paths = [".."]
+evm_version = "shanghai"
+solc_version = "0.8.23"
+optimizer = true
+optimizer_runs = 200
+remappings = [
+  "@openzeppelin/contracts/=../node_modules/@openzeppelin/contracts/",
+  "smart-wallet/=lib/smart-wallet/src/",
+  "solady/=lib/smart-wallet/lib/solady/src/",
+  "account-abstraction/=lib/smart-wallet/lib/account-abstraction/contracts/",
+  "webauthn-sol/=lib/smart-wallet/lib/webauthn-sol/src/",
+  "FreshCryptoLib/=lib/smart-wallet/lib/webauthn-sol/lib/FreshCryptoLib/solidity/src/",
+  "openzeppelin-contracts/=lib/smart-wallet/lib/openzeppelin-contracts/",
+  "forge-std/=lib/smart-wallet/lib/forge-std/src/",
+]
