@@ -30,7 +30,7 @@ export function Recover() {
 
   // Detect that the legitimate owner cancelled while we waited
   useEffect(() => {
-    if (req?.status === 'timelock' && pending.data === null && !busy) {
+    if (req?.status === 'timelock' && pending.data === null && !busy && Date.now() - (req.initiatedAt ?? 0) > 20000) {
       ;(async () => {
         const owners = await listOwners(req.wallet)
         const added = owners.some((o) => o.raw.toLowerCase() === progress?.credential?.publicKey.toLowerCase())
@@ -127,15 +127,20 @@ export function Recover() {
     const executor = await toAccount(cred)
     const call = await initiateCall(req!.wallet, x, y, req!.hash, req!.approvals.slice(0, threshold).map((a) => a.signature))
     const { txHash } = await sendCalls(executor, [call])
-    upsertRequest({ ...req!, status: 'timelock', initiateTx: txHash })
+    upsertRequest({ ...req!, status: 'timelock', initiateTx: txHash, initiatedAt: Date.now() })
     pending.refresh()
   }
 
   async function finish() {
     const executor = await toAccount(cred)
     const { txHash } = await sendCalls(executor, [executeCall(req!.wallet)])
-    const owners = await listOwners(req!.wallet)
-    const mine = owners.find((o) => o.raw.toLowerCase() === cred.publicKey.toLowerCase())
+    // the public RPC can lag a block behind the bundler, so retry a few times
+    let mine: Awaited<ReturnType<typeof listOwners>>[number] | undefined
+    for (let i = 0; i < 6 && !mine; i++) {
+      const owners = await listOwners(req!.wallet)
+      mine = owners.find((o) => o.raw.toLowerCase() === cred.publicKey.toLowerCase())
+      if (!mine) await new Promise((r) => setTimeout(r, 2500))
+    }
     if (!mine) throw new Error('The new key was not found on the wallet.')
     upsertRequest({ ...req!, status: 'done', executeTx: txHash })
     setWallet({

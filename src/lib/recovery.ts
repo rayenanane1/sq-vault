@@ -138,6 +138,7 @@ export type RecoveryRequest = {
   approvals: Approval[]
   status: 'collecting' | 'timelock' | 'done' | 'cancelled'
   initiateTx?: Hex
+  initiatedAt?: number
   executeTx?: Hex
 }
 
